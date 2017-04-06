@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
         mode = argv[3];
     }
 
+    mode = "";
 
     //string input_file_name = argv[1];
     //string output_file_name = argv[2];

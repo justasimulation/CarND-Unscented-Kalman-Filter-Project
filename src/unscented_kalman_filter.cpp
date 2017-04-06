@@ -1,3 +1,4 @@
+#include <cmath>
 #include "unscented_kalman_filter.h"
 
 using namespace Eigen;
@@ -31,8 +32,9 @@ UnscentedKalmanFilter::UnscentedKalmanFilter(KalmanFilterState &state) : state_(
         weights_(i) = weight;
     }
 
+    //working solution (1.,0.6)
     // tunable parameters
-    std_a_      = 3;
+    std_a_      = 1.;
     std_yawdd_  = 0.6;
 }
 
