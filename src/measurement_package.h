@@ -13,8 +13,8 @@ class MeasurementPackage
 
         enum SensorType
         {
-            LASER,
-            RADAR
+            LASER = 1,
+            RADAR = 2,
         }
         sensor_type_;
 

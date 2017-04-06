@@ -28,24 +28,32 @@ int main(int argc, char* argv[])
     string input_file_name = "../data/sample-laser-radar-measurement-data-2.txt";//argv[1];
     string output_file_name = "output.txt";//argv[2];
 
+    string mode = "";
+    if(argc == 4)
+    {
+        mode = argv[3];
+    }
+
+
     //string input_file_name = argv[1];
     //string output_file_name = argv[2];
 
     App app;
-    app.Run(input_file_name, output_file_name);
+    app.Run(input_file_name, output_file_name, mode);
 
     return 0;
 }
 
 /**
- * Checks that there are two arguments. Should be measurements_file_name, output_file_name
+ * Checks that there are two or three arguments. Should be measurements_file_name, output_file_name and optional mode
+ * "l" or "r"
  * Stops execution if number of arguments is incorrect.
  */
 void check_arguments(int argc, char* argv[])
 {
     string usage_instructions = "Usage instructions: ";
     usage_instructions += argv[0];
-    usage_instructions += " path/to/input.txt output.txt";
+    usage_instructions += " path/to/input.txt output.txt [l|r]";
 
     bool has_valid_args = false;
 
@@ -59,11 +67,11 @@ void check_arguments(int argc, char* argv[])
     {
         cerr << "Please include an output file.\n" << usage_instructions << endl;
     }
-    else if (argc == 3)
+    else if (argc == 3 || argc == 4)
     {
         has_valid_args = true;
     }
-    else if (argc > 3)
+    else if (argc > 4)
     {
         cerr << "Too many arguments.\n" << usage_instructions << endl;
     }

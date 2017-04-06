@@ -11,8 +11,10 @@ using namespace std;
  *
  * @param input_file_name - file to read measurements from.
  * @param output_file_name - file to write results to.
+ * @param mode - l for laser measurements only, r for radar measurements only, everything else means using
+ *               both measurements types.
  */
-void App::Run(const string &input_file_name, const string &output_file_name) const
+void App::Run(const string &input_file_name, const string &output_file_name, const string &mode) const
 {
     //cout<<"Application started."<<endl;
     //auto start_time = std::chrono::system_clock::now();
@@ -29,17 +31,24 @@ void App::Run(const string &input_file_name, const string &output_file_name) con
     FusionTrackerResult result;
     MeasurementPackage package;
 
+    unsigned int supported_sensors = mode == "r" ? MeasurementPackage::RADAR :
+                                      (mode == "l" ? MeasurementPackage::LASER :
+                                        MeasurementPackage::RADAR | MeasurementPackage::LASER);
+
     //The main cycle:
 
     //While there are measurements left
     while(measurement_device.GetNextMeasurement(package))
     {
-        //1. process next measurement by tracker
-        fusion_tracker.ProcessMeasurement(package, result);
+        if(package.sensor_type_ & supported_sensors)
+        {
+            //1. process next measurement by tracker
+            fusion_tracker.ProcessMeasurement(package, result);
 
-        //2. report results
-        storage.Report(result.estimation_, result.measurement_, package.ground_truth_,
-                       result.nis_, package.sensor_type_);
+            //2. report results
+            storage.Report(result.estimation_, result.measurement_, package.ground_truth_,
+                           result.nis_, package.sensor_type_);
+        }
     }
 
     //chrono::duration<double> proccessing_time = (chrono::system_clock::now() - start_time);
