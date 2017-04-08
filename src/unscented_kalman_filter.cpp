@@ -1,15 +1,23 @@
 #include <cmath>
+#include <iostream>
 #include "unscented_kalman_filter.h"
 
 using namespace Eigen;
+using namespace std;
 
 ///////////////////////////////////////Public methods///////////////////////////////////////////
 
 /**
  * Constructor. Memorizes state object and initializes parameters.
  * @param state
- */
-UnscentedKalmanFilter::UnscentedKalmanFilter(KalmanFilterState &state) : state_(state)
+ * @param v_dot_std - standard deviation of velocity change. Non negative value if set by user,
+ *                    or negative value otherwise.
+ * @param yaw_dot_dot_std - standard deviation of yaw acceleration. Non negative value if set by user,
+ *                          or negative value otherwise.
+*/
+UnscentedKalmanFilter::UnscentedKalmanFilter(KalmanFilterState &state,
+                                             const double v_dot_std,
+                                             const double yaw_dot_dot_std) : state_(state)
 {
     // state vector is: x, y, v, yaw, yaw_rate
     n_x_        = 5;
@@ -32,10 +40,9 @@ UnscentedKalmanFilter::UnscentedKalmanFilter(KalmanFilterState &state) : state_(
         weights_(i) = weight;
     }
 
-    //working solution (1.,0.6)
     // tunable parameters
-    std_a_      = 1.;
-    std_yawdd_  = 0.6;
+    std_a_      = v_dot_std < 0 ? 1. : v_dot_std;//1.;//3;//2.5;//1.;
+    std_yawdd_  = yaw_dot_dot_std < 0 ? 0.9 : yaw_dot_dot_std;//0.9;//0.9;//0.8;//0.9;
 }
 
 /**
@@ -103,10 +110,12 @@ void UnscentedKalmanFilter::NormalizeMeasurement(Eigen::VectorXd &vector) const 
  */
 double UnscentedKalmanFilter::NormalizeAngle(const double angle_rad) const
 {
-    //while (angle_rad> M_PI) angle_rad-=2.*M_PI;
-    //while (angle_rad<-M_PI) angle_rad+=2.*M_PI;
-    //return angle_rad;
+    double angle = angle_rad;
+    while (angle > M_PI) angle -=2.*M_PI;
+    while (angle < -M_PI) angle +=2.*M_PI;
+    return angle;
 
+    /*
     double angle = angle_rad;
     int times = (int)(angle / (2. * M_PI));
     angle -= times * 2 * M_PI;
@@ -114,7 +123,8 @@ double UnscentedKalmanFilter::NormalizeAngle(const double angle_rad) const
     if (angle_rad > M_PI) angle-=2.*M_PI;
     if (angle_rad < -M_PI) angle+=2.*M_PI;
 
-    return angle;
+
+    return angle;*/
 }
 
 ////////////////////////////////////////////Private methods////////////////////////////////////////////

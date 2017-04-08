@@ -30,6 +30,10 @@ class FusionTracker
         //matrices
         long previous_timestamp_;
 
+        //maximum delta time between measurmenets, if delta time is greater than that predictions
+        //step will be done each max_delta_time_ period, after which update step will be done.
+        double max_delta_time_;
+
         //filter state shared by all the filters
         KalmanFilterState common_filter_state_;
 
@@ -39,8 +43,12 @@ class FusionTracker
     public:
         /**
          * Constructor. Initializes values, filters, couples filters with the state.
+         * @param v_dot_std - standard deviation of velocity change. Non negative value if set by user,
+         *                    or negative value otherwise.
+         * @param yaw_dot_dot_std - standard deviation of yaw acceleration. Non negative value if set by user,
+         *                          or negative value otherwise.
          */
-        FusionTracker();
+        FusionTracker(const double v_dot_std, const double yaw_dot_dot_std);
 
         /**
          * On first call initializes shared filter state with given measurement.

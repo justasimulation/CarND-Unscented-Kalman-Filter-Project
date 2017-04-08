@@ -44,8 +44,14 @@ class UnscentedKalmanFilter
         /**
          * Constructor. Memorizes state object and initializes parameters.
          * @param state
+         * @param v_dot_std - standard deviation of velocity change. Non negative value if set by user,
+         *                    or negative value otherwise.
+         * @param yaw_dot_dot_std - standard deviation of yaw acceleration. Non negative value if set by user,
+         *                          or negative value otherwise.
          */
-        UnscentedKalmanFilter(KalmanFilterState &state);
+        UnscentedKalmanFilter(KalmanFilterState &state,
+                              const double v_dot_std,
+                              const double yaw_dot_dot_std);
 
         /**
          * Performs prediction step of unscented kalman filter.

@@ -14,7 +14,7 @@ class LaserFilter : public UnscentedKalmanFilter
          * Constructor. Initializes laser measurement noise and measurement matices and memorizes the state.
          * @param state
          */
-        LaserFilter(KalmanFilterState &state);
+        LaserFilter(KalmanFilterState &state, const double v_dot_std, const double yaw_dot_dot_std);
 
         /**
          * Converts raw measuremnt vector to Vector(4) cartesian vector.

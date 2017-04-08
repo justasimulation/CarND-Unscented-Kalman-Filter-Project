@@ -9,7 +9,8 @@ using namespace Eigen;
  *
  * @param state
  */
-RadarFilter::RadarFilter(KalmanFilterState &state) : UnscentedKalmanFilter(state)
+RadarFilter::RadarFilter(KalmanFilterState &state, const double v_dot_std, const double yaw_dot_dot_std) :
+                         UnscentedKalmanFilter(state, v_dot_std, yaw_dot_dot_std)
 {
     R_ = MatrixXd(3, 3);
     R_ << 0.3 * 0.3,     0,      0,

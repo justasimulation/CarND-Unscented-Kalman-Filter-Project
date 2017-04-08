@@ -11,10 +11,15 @@ using namespace std;
  *
  * @param input_file_name - file to read measurements from.
  * @param output_file_name - file to write results to.
- * @param mode - l for laser measurements only, r for radar measurements only, everything else means using
- *               both measurements types.
- */
-void App::Run(const string &input_file_name, const string &output_file_name, const string &mode) const
+ * @param sensor - l for laser measurements only, r for radar measurements only, everything else means using
+ *                 both measurements types.
+ * @param v_dot_std - standard deviation of velocity change. Non negative value if set by user,
+ *                    or negative value otherwise.
+ * @param yaw_dot_dot_std - standard deviation of yaw acceleration. Non negative value if set by user,
+ *                          or negative value otherwise.
+*/
+void App::Run(const string &input_file_name, const string &output_file_name,
+              const string &sensor, const double v_dot_std, const double yaw_dot_dot_std) const
 {
     //cout<<"Application started."<<endl;
     //auto start_time = std::chrono::system_clock::now();
@@ -26,13 +31,13 @@ void App::Run(const string &input_file_name, const string &output_file_name, con
     IMeasurementDevice &measurement_device = storage;
 
     //Initialize tracker
-    FusionTracker fusion_tracker = FusionTracker();
+    FusionTracker fusion_tracker = FusionTracker(v_dot_std, yaw_dot_dot_std);
 
     FusionTrackerResult result;
     MeasurementPackage package;
 
-    unsigned int supported_sensors = mode == "r" ? MeasurementPackage::RADAR :
-                                      (mode == "l" ? MeasurementPackage::LASER :
+    unsigned int supported_sensors = sensor == "r" ? MeasurementPackage::RADAR :
+                                      (sensor == "l" ? MeasurementPackage::LASER :
                                         MeasurementPackage::RADAR | MeasurementPackage::LASER);
 
     //The main cycle:

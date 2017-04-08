@@ -8,7 +8,8 @@ using namespace Eigen;
  * Constructor. Initializes laser measurement noise and measurement matices and memorizes the state.
  * @param state
  */
-LaserFilter::LaserFilter(KalmanFilterState &state) : UnscentedKalmanFilter(state)
+LaserFilter::LaserFilter(KalmanFilterState &state, const double v_dot_std, const double yaw_dot_dot_std) :
+                         UnscentedKalmanFilter(state, v_dot_std, yaw_dot_dot_std)
 {
     R_ = MatrixXd(2, 2);
     R_ <<   0.15 * 0.15, 0,

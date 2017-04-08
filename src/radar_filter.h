@@ -16,7 +16,7 @@ class RadarFilter : public UnscentedKalmanFilter
          *
          * @param state
          */
-        RadarFilter(KalmanFilterState &state);
+        RadarFilter(KalmanFilterState &state, double const v_dot_std, double const yaw_dot_dot_std);
 
         /**
          * Normalizes measurements[1] values which is yaw(phi) so it is located in the range [-PI, PI]

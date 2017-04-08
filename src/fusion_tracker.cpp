@@ -6,12 +6,19 @@ using namespace Eigen;
 
 /**
  * Constructor. Initializes values, filters, couples filters with the state.
- */
-FusionTracker::FusionTracker() : laser_filter_(common_filter_state_), radar_filter_(common_filter_state_)
+ * @param v_dot_std - standard deviation of velocity change. Non negative value if set by user,
+ *                    or negative value otherwise.
+ * @param yaw_dot_dot_std - standard deviation of yaw acceleration. Non negative value if set by user,
+ *                          or negative value otherwise.
+*/
+FusionTracker::FusionTracker(const double v_dot_std, const double yaw_dot_dot_std) :
+                            laser_filter_(common_filter_state_, v_dot_std, yaw_dot_dot_std),
+                            radar_filter_(common_filter_state_, v_dot_std, yaw_dot_dot_std)
 {
     is_initialized_ = false;
     previous_timestamp_ = 0;
     num_measurements_ = 0;
+    max_delta_time_ = 0.05;
 
     cumulative_square_error_ = VectorXd(4);
     cumulative_square_error_ << 0, 0, 0, 0;
@@ -62,8 +69,25 @@ void FusionTracker::ProcessMeasurement(const MeasurementPackage &measurement, Fu
         //memorize current time to calculate time delta next time
         previous_timestamp_ = measurement.timestamp_;
 
-        //perform predict step
-        filter.Predict(dt);
+        //UKF may be numerically unstable, in this assignment this happens when data-2 is used with radar data only.
+        //UKF diverges in this case.
+        // Some ways that I heard of to deal with this is (I'm not sure how good they are theoretically):
+        // -decompose large time delta into number of small ones and call predict step each small delta time
+        // -when cholesky decomposition failes because of negative eigenvalues, the tracking can be restarted
+        // -lambda value is negative, it makes things weird, it is possible to tune lambda so it is positive
+
+        // here I use the easiest way to deal with the issue so data-2-radar-only doesn't fail.
+        // if delta time is large it is devided into small max_delta_time_ parts and for each max_delta_time_
+        // the prediction step is invoked. Prediction is not linear so Predict(dt + dt) != Predict(dt) + Predict(dt),
+        // but it kind of works, may be because dt is small, so the motion is almost linear.
+        while(dt >= 0)
+        {
+            double d = std::min(max_delta_time_, dt);
+            //perform predict step
+            filter.Predict(d);
+
+            dt -= max_delta_time_;
+        }
 
         //perform update step
         nis = filter.Update(measurement.raw_measurements_);
@@ -81,6 +105,8 @@ void FusionTracker::ProcessMeasurement(const MeasurementPackage &measurement, Fu
     result.estimation_ = common_filter_state_.x_;
     result.measurement_ = cartesian_measurement;
     result.nis_ = nis;
+
+    //std::cout<<common_filter_state_.P_<<std::endl<<std::endl;
 }
 
 /**
@@ -94,13 +120,21 @@ void FusionTracker::InitializeState(const VectorXd &cartesian_x)
     // they reflect the fact that we are kind of confident in x and y because we take them
     // from the 1st measurement, but we may know nothing about speed
     common_filter_state_.P_ = MatrixXd(5, 5);
-    common_filter_state_.P_ <<  1, 0, 0,    0,  0,
-                                0, 1, 0,    0,  0,
-                                0, 0, 1000, 0,  0,
-                                0, 0, 0,    40, 0,
-                                0, 0, 0,    0,  3;
+    common_filter_state_.P_ <<  1, 0,    0,     0,  0,
+                                0, 1,    0,     0,  0,
+                                0,  0,   1,     0,  0,
+                                0,  0,   0,     0.1,  0,
+                                0,  0,   0,     0,  0.1;
 
     common_filter_state_.x_ = cartesian_x;
+
+    //As it was said in the hint for the project, starting zero coordinates may be bad for the filter,
+    //so make it small values
+    if(fabs(cartesian_x(0)) < 1e-5 && fabs(cartesian_x(1)) < 1e-5)
+    {
+        common_filter_state_.x_(0) = 0.01;
+        common_filter_state_.x_(1) = 0.01;
+    }
 }
 
 /**
